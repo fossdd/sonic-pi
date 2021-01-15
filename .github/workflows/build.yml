@@ -1,12 +1,14 @@
 name: Build
 
 on:
+  # Do it on every push or PR on these branches
   push:
     branches: [ dev, main, workflow_dispatch, features/mac-action ]
   pull_request:
     branches: [ dev, main, workflow_dispatch, features/mac-action ]
 
 jobs:
+  # Build Sonic Pi
   build:
     name: "${{matrix.title}} (${{matrix.cc}}, ${{matrix.arch}}, ${{matrix.build_type}})"
     runs-on: ${{matrix.os}}
@@ -81,6 +83,7 @@ jobs:
         otp-version: 23.2.1
       if: matrix.os == 'ubuntu-latest'
 
+      # Install Erlang on MacOS
     - name: Mac Erlang
       continue-on-error: true
       run: |
@@ -89,6 +92,7 @@ jobs:
         brew install erlang
       if: matrix.os == 'macos-latest'
 
+      # Prebuild on Ubuntu
     - name: Prebuild Linux
       working-directory: ${{github.workspace}}/app/gui/qt
       env:
@@ -98,7 +102,8 @@ jobs:
         sudo apt install -y libssl-dev ruby-dev supercollider-server sc3-plugins-server alsa-utils jackd2 libjack-jackd2-dev libjack-jackd2-0 libasound2-dev librtmidi-dev pulseaudio-module-jack
         ./linux-prebuild.sh --build-aubio
       if: matrix.os == 'ubuntu-latest'
-   
+
+      # Prebuild on Mac
     - name: Prebuild Mac
       working-directory: ${{github.workspace}}/app/gui/qt
       env:
@@ -108,6 +113,7 @@ jobs:
         ./mac-prebuild.sh
       if: matrix.os == 'macos-latest'
    
+    # Prebuild on Windows
     # Note that we 'hide' the msys folders on windows to stop conflicts when building 
     # Flac
     - name: Prebuild Windows
@@ -123,7 +129,8 @@ jobs:
     
       #- name: Setup tmate session
       # uses: mxschmitt/action-tmate@v3
-        
+
+      # Run Configuration Config on Ubuntu
     - name: Config Linux
       working-directory: ${{github.workspace}}/app/gui/qt
       env:
@@ -132,7 +139,8 @@ jobs:
       run: |
         ./linux-config.sh
       if: matrix.os == 'ubuntu-latest'
-    
+
+      # Run Configuration Config on Mac
     - name: Config Mac
       working-directory: ${{github.workspace}}/app/gui/qt
       env:
@@ -141,7 +149,8 @@ jobs:
       run: |
         ./mac-config.sh
       if: matrix.os == 'macos-latest'
-    
+
+      # Run Configuration Config on Windows
     - name: Config Windows
       working-directory: ${{github.workspace}}/app/gui/qt
       shell: cmd
@@ -152,6 +161,7 @@ jobs:
         win-config.bat
       if: matrix.os == 'windows-latest'
     
+    # Finally: Build
     - name: Do build
       working-directory: ${{github.workspace}}/app/gui/qt/build
       run: cmake --build . --config ${{ matrix.build_type }}
